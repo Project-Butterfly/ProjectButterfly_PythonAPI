@@ -1,7 +1,25 @@
 import logging
 import requests
 from tqdm import tqdm
-from db_connection import DatabaseConnection
+from models import *
+
+USER_FRAG = """
+    id
+    name
+    """
+POST_FRAG = """
+    id
+    title
+    description
+    author {""" + USER_FRAG + """}
+    completed
+    reserved
+    """
+MSG_FRAG = """
+    id
+    author {""" + USER_FRAG + """}
+    post {""" + POST_FRAG + """}
+    """
 
 
 def perform_graphql(query, token=None):
@@ -13,25 +31,19 @@ def perform_graphql(query, token=None):
     else:
         logging.warning(query)
         logging.warning(f"GraphQL Response failed. Status Code: {response.status_code}. Reason: {response.reason}")
+    logging.debug(response.json())
     return response.json()
 
 
-class Message:
-    def __init__(self, **kwargs):
-        self.id = kwargs['id']
-        self.author = kwargs['author']['id']
+class UserConnection:
+    def __init__(self, token, user):
+        self.token = token
+        self.user = user
 
-
-class Post:
-    def __init__(self, **kwargs):
-        self.id = kwargs["id"]
-        self.completed = kwargs["completed"]
-        self.reserved = kwargs["reserved"]
-
-    def get_messages(self, user):
-        return list(map(lambda msg: Message(**msg), filter(lambda msg: msg['post']['id'] == self.id, perform_graphql("""
+    def get_messages(self, post_id):
+        return list(map(lambda msg: Message(**msg), filter(lambda msg: msg['post']['id'] == post_id, perform_graphql("""
             {
-                getMessagesForPost(id: \"""" + self.id + """\") {
+                getMessagesForPost(id: \"""" + post_id + """\") {
                     id
                     author {
                         id
@@ -40,15 +52,7 @@ class Post:
                         id
                     }
                 }
-            }""", user.token)['data']['getMessagesForPost'])))
-
-
-class User:
-    def __init__(self, user_id, name, phone, token):
-        self.user_id = user_id
-        self.name = name
-        self.phone = phone
-        self.token = token
+            }""", self.token)['data']['getMessagesForPost'])))
 
     def create_post(self, title, description, portions, lat, lon, city):
         perform_graphql("""
@@ -82,7 +86,6 @@ class User:
             }""", self.token)
 
     def get_my_posts(self):
-        logging.debug("Fetching Posts from User " + self.name)
         return list(map(lambda x: Post(**x), perform_graphql("""{
                 myPosts {
                     id
@@ -95,7 +98,7 @@ class User:
         my_posts = self.get_my_posts()
         if not my_posts:
             return
-        for post in tqdm(self.get_my_posts()):
+        for post in tqdm(my_posts):
             self.delete_post(post['id'])
 
 
@@ -113,14 +116,15 @@ def create_user(name, phone_number, password):
                 token
             }
         }""" % (name, phone_number, password))['data']['createUser']
-    return User(
-        user['user']['id'],
-        name,
-        phone_number,
-        user['token'])
+    return UserConnection(
+        user['token'],
+        User(
+            user['user']['id'],
+            name,
+            phone_number))
 
 
-def generate_user_model(phone_number, password):
+def user_login(phone_number, password):
     query = """
                 mutation {
                     login(data: {
@@ -136,22 +140,24 @@ def generate_user_model(phone_number, password):
                     }
                 }"""
     user = perform_graphql(query % (phone_number, password))['data']['login']
-    return User(
-        user['user']['id'],
-        user['user']['name'],
-        phone_number,
-        user['token'])
+    return UserConnection(
+        user['token'],
+        User(
+            user['user']['id'],
+            user['user']['name'],
+            phone_number))
 
 
-def generate_user_models(data):
+def bulk_login(data):
     """
     data is a 2-dimensional array containing data used to login. Every second-level array must have a structure of
     [0] -> phoneNumber
     [1] -> password
     """
-    _models = []
+    users = []
 
     for i in tqdm(data, desc="Login Progress"):
-        _models.append(generate_user_model(i[0], i[1]))
+        users.append(user_login(i[0], i[1]))
 
-    return _models
+    return users
+
