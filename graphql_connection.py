@@ -160,4 +160,3 @@ def bulk_login(data):
         users.append(user_login(i[0], i[1]))
 
     return users
-

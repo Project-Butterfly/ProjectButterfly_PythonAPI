@@ -3,7 +3,7 @@ import logging
 import psycopg2
 
 
-class DatabaseConnection:
+class DataAccessObject:
     def __init__(self, config=None):
         if config is None:
             config = get_config()
