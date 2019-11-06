@@ -1,13 +1,11 @@
-from configparser import ConfigParser
+import config_handler
 import logging
 import psycopg2
 
 
 class DataAccessObject:
-    def __init__(self, config=None):
-        if config is None:
-            config = get_config()
-        self.config = config
+    def __init__(self, config=config_handler.get_default()):
+        self.config = config.get_db_config()
         self.has_connected = False
         self.tables = {i: f'"projectbutterflyapi$prod"."{i}"' for i in ["User", "Post", "Message"]}
 
@@ -58,21 +56,6 @@ class DataAccessObject:
             return msgs
 
         return self._connect(_get_messages)
-
-
-def get_config(config='db_credentials.ini', section='postgresql'):
-    parser = ConfigParser()
-    parser.read(config)
-
-    config = {}
-    if parser.has_section(section):
-        params = parser.items(section)
-        for param in params:
-            config[param[0]] = param[1]
-    else:
-        raise Exception(f'Section {section} not found in the {config} file')
-
-    return config
 
 
 if __name__ == '__main__':
