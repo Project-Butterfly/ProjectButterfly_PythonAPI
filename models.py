@@ -7,6 +7,7 @@ class Message:
 class Post:
     def __init__(self, **kwargs):
         self.id = kwargs["id"]
+        self.title = kwargs["title"]
         self.completed = kwargs["completed"]
         self.reserved = kwargs["reserved"]
 
