@@ -45,8 +45,3 @@ for post in posts:
     location = generate_location()
     models[choice].create_post(post["title"], post['description'], post['portions'], location[0], location[1],
                                "Luxembourg", post['img_url'])
-
-# for model in models:
-#     for post in model.get_my_posts():
-#         if "Schnecken" != post.title:
-#             model.delete_post(post.id)

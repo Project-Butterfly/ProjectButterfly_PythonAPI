@@ -48,7 +48,7 @@ class UserConnection:
     def get_messages(self, post_id):
         return list(map(lambda msg: Message(**msg), filter(lambda msg: msg['post']['id'] == post_id, _perform_graphql("""
             {
-                getMessagesForPost(id: \"""" + post_id + """\") {
+                getMessagesForPost(id: "%s") {
                     id
                     author {
                         id
@@ -57,7 +57,7 @@ class UserConnection:
                         id
                     }
                 }
-            }""", self.token)['data']['getMessagesForPost'])))
+            }""" % post_id, self.token)['data']['getMessagesForPost'])))
 
     def create_post(self, title, description, portions, lat, lon, city, img_url=None):
         base_64 = None
@@ -81,6 +81,17 @@ class UserConnection:
             }""" % (title, description,
                     ("image: " + f"\"{base_64.decode()}\"") if base_64 is not None else "",
                     portions, lat, lon, city), self.token)
+
+    def create_message(self, text, post_id):
+        _perform_graphql("""
+            mutation {
+                createMessage(data: {
+                    text: "%s"
+                    post: "%s"
+                }) {
+                    id
+                }
+            }""" % (text, post_id), self.token)
 
     def delete_post(self, post_id):
         _perform_graphql("""
