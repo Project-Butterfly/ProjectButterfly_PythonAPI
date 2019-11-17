@@ -1,8 +1,8 @@
 import json
-import config_handler
-import logging
 import random
 import string
+
+import config_handler
 import graphql_connection
 from db_connection import DataAccessObject
 

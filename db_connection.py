@@ -16,6 +16,7 @@ class DataAccessObject:
         connection = None
         value = None
 
+        # noinspection PyUnresolvedReferences
         try:
             logging.debug('Connecting to the PostgreSQL Database...')
 
@@ -41,6 +42,7 @@ class DataAccessObject:
     def get_phone_numbers(self):
 
         def _get_phone_number(cursor):
+            # noinspection SqlResolve,SqlNoDataSourceInspection
             cursor.execute(f'SELECT "User"."phoneNumber" FROM {self.tables["User"]}')
             users = cursor.fetchall()
             return tuple(map(lambda x: x[0], users))
@@ -50,6 +52,7 @@ class DataAccessObject:
     def get_messages(self, limit=-1):
 
         def _get_messages(cursor):
+            # noinspection SqlResolve,SqlNoDataSourceInspection
             cursor.execute(f'SELECT "Message".* FROM {self.tables["Message"]}' +
                            (f' LIMIT {limit}' if limit > 0 else ''))
             msgs = cursor.fetchall()
