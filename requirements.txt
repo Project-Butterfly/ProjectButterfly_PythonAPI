@@ -41,7 +41,7 @@ idna==2.8
 importlib-metadata==0.23
 itsdangerous==1.1.0
 Jade-Application-Kit==2.0.10
-Jinja2==2.10.3
+Jinja2==2.11.3
 keyutils==0.6
 kiwisolver==1.1.0
 lensfun==0.3.2
